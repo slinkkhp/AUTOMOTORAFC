@@ -32,10 +32,11 @@ variables:
     value: "azure-automotorafc"
   - name: appServiceName
     value: "automotora-fc-front"
-  # URL publica del backend. Vite la incrusta en el build, asi que si cambia
-  # hay que volver a ejecutar este pipeline.
+  # URL publica del backend (dominio real asignado por Azure, con sufijo).
+  # Vite la incrusta en el build, asi que si cambia hay que volver a
+  # ejecutar este pipeline.
   - name: apiUrl
-    value: "https://automotora-fc-back.azurewebsites.net"
+    value: "https://automotora-fc-back-ajbzf9dpgbgrf3fn.eastus2-01.azurewebsites.net"
   - name: nodeVersion
     value: "20.x"
   - name: workingDir
