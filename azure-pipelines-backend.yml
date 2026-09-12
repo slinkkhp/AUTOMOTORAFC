@@ -1,0 +1,125 @@
+# ============================================================================
+# AUTOMOTORAFC - Pipeline CI/CD del Backend (US-13)
+# Publica la API Django en el App Service "automotora-fc-back".
+#
+# Requisitos previos en Azure DevOps:
+#   1. Project Settings > Service connections > New > Azure Resource Manager.
+#   2. Pipelines > Library > Variable group llamado "automotorafc-backend" con:
+#        azureSubscription  -> nombre de la service connection
+#        appServiceName     -> automotora-fc-back
+# ============================================================================
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - backend/*
+      - azure-pipelines-backend.yml
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - backend/*
+
+variables:
+  - group: automotorafc-backend
+  - name: pythonVersion
+    value: "3.11"
+  - name: workingDir
+    value: "$(System.DefaultWorkingDirectory)/backend"
+
+stages:
+  # --------------------------------------------------------------------------
+  - stage: Build
+    displayName: Compilar y probar
+    jobs:
+      - job: BuildTest
+        displayName: Instalar dependencias y ejecutar pruebas
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - task: UsePythonVersion@0
+            displayName: Usar Python $(pythonVersion)
+            inputs:
+              versionSpec: "$(pythonVersion)"
+
+          - script: |
+              python -m venv antenv
+              source antenv/bin/activate
+              python -m pip install --upgrade pip
+              pip install -r requirements.txt
+            workingDirectory: $(workingDir)
+            displayName: Instalar dependencias
+
+          - script: |
+              source antenv/bin/activate
+              python manage.py check
+            workingDirectory: $(workingDir)
+            displayName: Validar configuracion de Django
+
+          - script: |
+              source antenv/bin/activate
+              python manage.py makemigrations --check --dry-run
+            workingDirectory: $(workingDir)
+            displayName: Verificar que no falten migraciones
+
+          - script: |
+              source antenv/bin/activate
+              python manage.py test --verbosity 2
+            workingDirectory: $(workingDir)
+            displayName: Ejecutar pruebas unitarias
+            env:
+              DJANGO_DEBUG: "False"
+              DJANGO_SECRET_KEY: $(Build.BuildId)-clave-de-pruebas
+              DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+
+          - task: ArchiveFiles@2
+            displayName: Empaquetar aplicacion
+            inputs:
+              rootFolderOrFile: $(workingDir)
+              includeRootFolder: false
+              archiveType: zip
+              archiveFile: $(Build.ArtifactStagingDirectory)/backend.zip
+              replaceExistingArchive: true
+
+          - publish: $(Build.ArtifactStagingDirectory)/backend.zip
+            artifact: backend
+            displayName: Publicar artefacto
+
+  # --------------------------------------------------------------------------
+  - stage: Deploy
+    displayName: Desplegar en Azure App Service
+    dependsOn: Build
+    condition: >-
+      and(succeeded(),
+          eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: DeployBackend
+        displayName: Publicar en $(appServiceName)
+        environment: produccion
+        pool:
+          vmImage: ubuntu-latest
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - download: current
+                  artifact: backend
+
+                - task: AzureWebApp@1
+                  displayName: Desplegar API Django
+                  inputs:
+                    azureSubscription: $(azureSubscription)
+                    appType: webAppLinux
+                    appName: $(appServiceName)
+                    package: $(Pipeline.Workspace)/backend/backend.zip
+                    runtimeStack: "PYTHON|3.11"
+                    startUpCommand: "bash /home/site/wwwroot/startup.sh"
+                    appSettings: >-
+                      -SCM_DO_BUILD_DURING_DEPLOYMENT true
+                      -ENABLE_ORYX_BUILD true
