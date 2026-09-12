@@ -1,0 +1,32 @@
+# ---- Python / Django ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+antenv/
+env/
+venv/
+db.sqlite3
+db.sqlite3-journal
+staticfiles/
+media/
+
+# ---- Node / Vite ----
+node_modules/
+dist/
+.vite/
+npm-debug.log*
+yarn-error.log*
+
+# ---- Entorno ----
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# ---- Editores y sistema operativo ----
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
