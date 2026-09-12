@@ -1,0 +1,129 @@
+# ============================================================================
+# AUTOMOTORAFC - Pipeline CI/CD del Frontend (US-13)
+# Compila la SPA de React y la publica en el App Service
+# "automotora-fc-front".
+#
+# Requisitos previos en Azure DevOps:
+#   1. Project Settings > Service connections > New > Azure Resource Manager.
+#   2. Pipelines > Library > Variable group llamado "automotorafc-frontend" con:
+#        azureSubscription  -> nombre de la service connection
+#        appServiceName     -> automotora-fc-front
+#        apiUrl             -> https://automotora-fc-back.azurewebsites.net
+# ============================================================================
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - frontend/*
+      - azure-pipelines-frontend.yml
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - frontend/*
+
+variables:
+  - group: automotorafc-frontend
+  - name: nodeVersion
+    value: "20.x"
+  - name: workingDir
+    value: "$(System.DefaultWorkingDirectory)/frontend"
+
+stages:
+  # --------------------------------------------------------------------------
+  - stage: Build
+    displayName: Compilar la SPA
+    jobs:
+      - job: BuildSPA
+        displayName: Instalar dependencias y generar build de produccion
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - task: NodeTool@0
+            displayName: Usar Node $(nodeVersion)
+            inputs:
+              versionSpec: "$(nodeVersion)"
+
+          # npm ci exige package-lock.json; si aun no esta versionado,
+          # caemos a npm install para no romper la compilacion.
+          - script: |
+              if [ -f package-lock.json ]; then
+                npm ci
+              else
+                echo "package-lock.json ausente: usando npm install"
+                npm install
+              fi
+            workingDirectory: $(workingDir)
+            displayName: Instalar dependencias
+
+          - script: npm run build
+            workingDirectory: $(workingDir)
+            displayName: Generar build de produccion
+            env:
+              # Vite reemplaza import.meta.env.VITE_API_URL en tiempo de build,
+              # por eso la URL del backend se inyecta aqui y no en runtime.
+              VITE_API_URL: $(apiUrl)
+
+          # Solo empaquetamos lo necesario para servir la SPA en App Service:
+          # el build compilado, el servidor Express y su manifiesto.
+          - script: |
+              mkdir -p "$(Build.ArtifactStagingDirectory)/app"
+              cp -r dist "$(Build.ArtifactStagingDirectory)/app/"
+              cp server.js package.json "$(Build.ArtifactStagingDirectory)/app/"
+              [ -f package-lock.json ] && \
+                cp package-lock.json "$(Build.ArtifactStagingDirectory)/app/"
+              exit 0
+            workingDirectory: $(workingDir)
+            displayName: Preparar paquete de despliegue
+
+          - task: ArchiveFiles@2
+            displayName: Empaquetar aplicacion
+            inputs:
+              rootFolderOrFile: $(Build.ArtifactStagingDirectory)/app
+              includeRootFolder: false
+              archiveType: zip
+              archiveFile: $(Build.ArtifactStagingDirectory)/frontend.zip
+              replaceExistingArchive: true
+
+          - publish: $(Build.ArtifactStagingDirectory)/frontend.zip
+            artifact: frontend
+            displayName: Publicar artefacto
+
+  # --------------------------------------------------------------------------
+  - stage: Deploy
+    displayName: Desplegar en Azure App Service
+    dependsOn: Build
+    condition: >-
+      and(succeeded(),
+          eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: DeployFrontend
+        displayName: Publicar en $(appServiceName)
+        environment: produccion
+        pool:
+          vmImage: ubuntu-latest
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - download: current
+                  artifact: frontend
+
+                - task: AzureWebApp@1
+                  displayName: Desplegar SPA de React
+                  inputs:
+                    azureSubscription: $(azureSubscription)
+                    appType: webAppLinux
+                    appName: $(appServiceName)
+                    package: $(Pipeline.Workspace)/frontend/frontend.zip
+                    runtimeStack: "NODE|20-lts"
+                    startUpCommand: "npm start"
+                    appSettings: >-
+                      -SCM_DO_BUILD_DURING_DEPLOYMENT true
+                      -ENABLE_ORYX_BUILD true
