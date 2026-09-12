@@ -3,12 +3,9 @@
 # Compila la SPA de React y la publica en el App Service
 # "automotora-fc-front".
 #
-# Requisitos previos en Azure DevOps:
-#   1. Project Settings > Service connections > New > Azure Resource Manager.
-#   2. Pipelines > Library > Variable group llamado "automotorafc-frontend" con:
-#        azureSubscription  -> nombre de la service connection
-#        appServiceName     -> automotora-fc-front
-#        apiUrl             -> https://automotora-fc-back.azurewebsites.net
+# Requisito previo unico en Azure DevOps:
+#   Project Settings > Service connections > New > Azure Resource Manager,
+#   nombrada igual que la variable azureSubscription de mas abajo.
 # ============================================================================
 
 trigger:
@@ -29,7 +26,16 @@ pr:
       - frontend/*
 
 variables:
-  - group: automotorafc-frontend
+  # Nombre EXACTO de la service connection en:
+  # Project Settings > Service connections
+  - name: azureSubscription
+    value: "azure-automotorafc"
+  - name: appServiceName
+    value: "automotora-fc-front"
+  # URL publica del backend. Vite la incrusta en el build, asi que si cambia
+  # hay que volver a ejecutar este pipeline.
+  - name: apiUrl
+    value: "https://automotora-fc-back.azurewebsites.net"
   - name: nodeVersion
     value: "20.x"
   - name: workingDir
