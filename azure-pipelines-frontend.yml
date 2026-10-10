@@ -1,7 +1,7 @@
 # ============================================================================
 # AUTOMOTORAFC - Pipeline CI/CD del Frontend (US-13)
 # Compila la SPA de React y la publica en el App Service
-# "automotora-fc-front".
+# "automotorafc-web".
 #
 # Requisito previo unico en Azure DevOps:
 #   Project Settings > Service connections > New > Azure Resource Manager,
@@ -31,14 +31,14 @@ variables:
   - name: azureSubscription
     value: "azure-automotorafc"
   - name: appServiceName
-    value: "automotora-fc-front"
+    value: "automotorafc-web"
   # URL publica del backend (dominio real asignado por Azure, con sufijo).
   # Vite la incrusta en el build, asi que si cambia hay que volver a
   # ejecutar este pipeline.
   - name: apiUrl
-    value: "https://automotora-fc-back-ajbzf9dpgbgrf3fn.eastus2-01.azurewebsites.net"
+    value: "https://automotorafc-api-grfuedbudmcjcwaw.eastus2-01.azurewebsites.net"
   - name: nodeVersion
-    value: "20.x"
+    value: "22.x"
   - name: workingDir
     value: "$(System.DefaultWorkingDirectory)/frontend"
 
@@ -129,7 +129,7 @@ stages:
                     appType: webAppLinux
                     appName: $(appServiceName)
                     package: $(Pipeline.Workspace)/frontend/frontend.zip
-                    runtimeStack: "NODE|20-lts"
+                    runtimeStack: "NODE|22-lts"
                     startUpCommand: "npm start"
                     appSettings: >-
                       -SCM_DO_BUILD_DURING_DEPLOYMENT true

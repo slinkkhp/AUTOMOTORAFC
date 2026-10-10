@@ -1,6 +1,6 @@
 # ============================================================================
 # AUTOMOTORAFC - Pipeline CI/CD del Backend (US-13)
-# Publica la API Django en el App Service "automotora-fc-back".
+# Publica la API Django en el App Service "automotorafc-api".
 #
 # Requisito previo unico en Azure DevOps:
 #   Project Settings > Service connections > New > Azure Resource Manager,
@@ -30,7 +30,7 @@ variables:
   - name: azureSubscription
     value: "azure-automotorafc"
   - name: appServiceName
-    value: "automotora-fc-back"
+    value: "automotorafc-api"
   - name: pythonVersion
     value: "3.11"
   - name: workingDir
