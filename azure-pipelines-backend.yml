@@ -51,28 +51,32 @@ stages:
             inputs:
               versionSpec: "$(pythonVersion)"
 
+          # El venv va en la carpeta temporal del agente, NO dentro de
+          # backend/: un virtualenv lleva rutas absolutas grabadas y si viaja
+          # dentro del paquete, Azure lo activa y gunicorn apunta a una ruta
+          # inexistente (el contenedor muere con exit code 127).
           - script: |
-              python -m venv antenv
-              source antenv/bin/activate
+              python -m venv $(Agent.TempDirectory)/venv
+              source $(Agent.TempDirectory)/venv/bin/activate
               python -m pip install --upgrade pip
               pip install -r requirements.txt
             workingDirectory: $(workingDir)
             displayName: Instalar dependencias
 
           - script: |
-              source antenv/bin/activate
+              source $(Agent.TempDirectory)/venv/bin/activate
               python manage.py check
             workingDirectory: $(workingDir)
             displayName: Validar configuracion de Django
 
           - script: |
-              source antenv/bin/activate
+              source $(Agent.TempDirectory)/venv/bin/activate
               python manage.py makemigrations --check --dry-run
             workingDirectory: $(workingDir)
             displayName: Verificar que no falten migraciones
 
           - script: |
-              source antenv/bin/activate
+              source $(Agent.TempDirectory)/venv/bin/activate
               python manage.py test --verbosity 2
             workingDirectory: $(workingDir)
             displayName: Ejecutar pruebas unitarias
@@ -81,10 +85,28 @@ stages:
               DJANGO_SECRET_KEY: $(Build.BuildId)-clave-de-pruebas
               DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
 
+          # Azure instala las dependencias por su cuenta (Oryx) a partir de
+          # requirements.txt, asi que el paquete lleva solo codigo fuente.
+          - task: CopyFiles@2
+            displayName: Preparar paquete de despliegue
+            inputs:
+              SourceFolder: $(workingDir)
+              Contents: |
+                **
+                !**/antenv/**
+                !**/.venv/**
+                !**/venv/**
+                !**/__pycache__/**
+                !**/*.pyc
+                !**/db.sqlite3
+                !**/staticfiles/**
+                !**/.env
+              TargetFolder: $(Build.ArtifactStagingDirectory)/app
+
           - task: ArchiveFiles@2
             displayName: Empaquetar aplicacion
             inputs:
-              rootFolderOrFile: $(workingDir)
+              rootFolderOrFile: $(Build.ArtifactStagingDirectory)/app
               includeRootFolder: false
               archiveType: zip
               archiveFile: $(Build.ArtifactStagingDirectory)/backend.zip
