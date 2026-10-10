@@ -85,8 +85,20 @@ stages:
               DJANGO_SECRET_KEY: $(Build.BuildId)-clave-de-pruebas
               DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
 
+          # Los estaticos se recolectan AQUI y viajan ya listos en el
+          # paquete, para que el arranque en Azure no gaste CPU en esto
+          # (critico en el plan F1, que apaga la app entre visitas).
+          - script: |
+              source $(Agent.TempDirectory)/venv/bin/activate
+              python manage.py collectstatic --noinput
+            workingDirectory: $(workingDir)
+            displayName: Recolectar archivos estaticos
+            env:
+              DJANGO_SECRET_KEY: $(Build.BuildId)-clave-de-compilacion
+
           # Azure instala las dependencias por su cuenta (Oryx) a partir de
-          # requirements.txt, asi que el paquete lleva solo codigo fuente.
+          # requirements.txt, asi que el paquete lleva el codigo fuente mas
+          # los estaticos ya recolectados.
           - task: CopyFiles@2
             displayName: Preparar paquete de despliegue
             inputs:
@@ -99,7 +111,6 @@ stages:
                 !**/__pycache__/**
                 !**/*.pyc
                 !**/db.sqlite3
-                !**/staticfiles/**
                 !**/.env
               TargetFolder: $(Build.ArtifactStagingDirectory)/app
 
