@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 
 import { api } from "../api.js";
+import {
+  enlaceWhatsApp, etiqueta, mensajeServicio,
+} from "../config.js";
 import { formatearDuracion, formatearPrecio } from "../utils.js";
-import { IconoReloj, iconoPorCategoria } from "./Iconos.jsx";
+import { IconoReloj, IconoWhatsapp, iconoPorCategoria } from "./Iconos.jsx";
 import Mensaje from "./Mensaje.jsx";
 
 const CATEGORIAS = [
@@ -86,7 +89,7 @@ export default function Servicios({ onAgendar }) {
                   {iconoPorCategoria(servicio.categoria, { width: 22, height: 22 })}
                 </span>
 
-                <p className="tarjeta__categoria">{servicio.categoria_display}</p>
+                <p className="tarjeta__categoria">{etiqueta(servicio.categoria_display)}</p>
                 <h3>{servicio.nombre}</h3>
                 <p className="tarjeta__descripcion">{servicio.descripcion}</p>
 
@@ -105,6 +108,15 @@ export default function Servicios({ onAgendar }) {
                     Agendar
                   </button>
                 </div>
+
+                <a
+                  className="btn btn--wsp btn--bloque tarjeta__consulta"
+                  href={enlaceWhatsApp(mensajeServicio(servicio))}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <IconoWhatsapp /> Consultar por este servicio
+                </a>
               </article>
             ))}
           </div>
