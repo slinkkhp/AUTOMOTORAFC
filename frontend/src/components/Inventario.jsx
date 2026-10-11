@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { api } from "../api.js";
+import { etiqueta } from "../config.js";
 import { formatearPrecio } from "../utils.js";
 import { IconoBasura, IconoBuscar } from "./Iconos.jsx";
 import Mensaje from "./Mensaje.jsx";
@@ -22,8 +23,12 @@ const FORM_VACIO = {
   stock_minimo: "5",
 };
 
-/** Panel administrativo de inventario (US-07, US-08). */
-export default function Inventario() {
+/**
+ * Panel de inventario (US-07, US-08).
+ * Con `embebido` se omite el encabezado de seccion, para usarlo dentro
+ * del panel de administracion sin duplicar titulos.
+ */
+export default function Inventario({ embebido = false }) {
   const [productos, setProductos] = useState([]);
   const [resumen, setResumen] = useState(null);
   const [form, setForm] = useState(FORM_VACIO);
@@ -102,18 +107,8 @@ export default function Inventario() {
     );
   }, [productos, busqueda]);
 
-  return (
-    <section className="seccion seccion--gris">
-      <div className="contenedor">
-        <div className="seccion__encabezado">
-          <span className="seccion__etiqueta">Modulo administrativo</span>
-          <h2>Inventario de repuestos e insumos</h2>
-          <p>
-            Registra nuevos productos y controla las existencias. Los items bajo el
-            stock minimo se destacan automaticamente.
-          </p>
-        </div>
-
+  const cuerpo = (
+    <>
         {resumen && (
           <div className="estadisticas">
             <div className="estadistica">
@@ -179,9 +174,9 @@ export default function Inventario() {
                   value={form.categoria}
                   onChange={actualizar("categoria")}
                 >
-                  {CATEGORIAS.map(([valor, etiqueta]) => (
+                  {CATEGORIAS.map(([valor, texto]) => (
                     <option key={valor} value={valor}>
-                      {etiqueta}
+                      {texto}
                     </option>
                   ))}
                 </select>
@@ -284,7 +279,7 @@ export default function Inventario() {
                         <td>
                           <strong>{producto.nombre}</strong>
                         </td>
-                        <td>{producto.categoria_display}</td>
+                        <td>{etiqueta(producto.categoria_display)}</td>
                         <td>{formatearPrecio(producto.precio)}</td>
                         <td>
                           <span
@@ -314,6 +309,23 @@ export default function Inventario() {
             </div>
           </div>
         </div>
+    </>
+  );
+
+  if (embebido) return cuerpo;
+
+  return (
+    <section className="seccion seccion--gris">
+      <div className="contenedor">
+        <div className="seccion__encabezado">
+          <span className="seccion__etiqueta">Modulo administrativo</span>
+          <h2>Inventario de repuestos e insumos</h2>
+          <p>
+            Registra nuevos productos y controla las existencias. Los items bajo el
+            stock minimo se destacan automaticamente.
+          </p>
+        </div>
+        {cuerpo}
       </div>
     </section>
   );

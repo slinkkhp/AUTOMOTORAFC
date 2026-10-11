@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { api } from "../api.js";
+import { etiqueta } from "../config.js";
 import { hoyISO } from "../utils.js";
 import Mensaje from "./Mensaje.jsx";
 
@@ -135,7 +136,7 @@ export default function AgendarCita({ servicioPreseleccionado }) {
                   <option value="">Selecciona un servicio</option>
                   {servicios.map((s) => (
                     <option key={s.id} value={s.id}>
-                      {s.categoria_display} - {s.nombre}
+                      {etiqueta(s.categoria_display)} - {s.nombre}
                     </option>
                   ))}
                 </select>
