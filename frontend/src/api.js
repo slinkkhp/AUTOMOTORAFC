@@ -1,5 +1,5 @@
 /**
- * Cliente HTTP de la API de AUTOMOTORAFC.
+ * Cliente HTTP de la API de Automotora Facundo Cousino.
  *
  * La URL base se inyecta en tiempo de build con VITE_API_URL para no
  * hardcodear el App Service del backend (US-11, US-14).
@@ -58,6 +58,15 @@ export const api = {
     request("/api/productos/", { method: "POST", body: JSON.stringify(datos) }),
   eliminarProducto: (id) => request(`/api/productos/${id}/`, { method: "DELETE" }),
   resumenInventario: () => request("/api/productos/resumen/"),
+
+  listarVehiculos: (params = "") =>
+    request(`/api/vehiculos/${params}`).then(comoLista),
+  crearVehiculo: (datos) =>
+    request("/api/vehiculos/", { method: "POST", body: JSON.stringify(datos) }),
+  actualizarVehiculo: (id, datos) =>
+    request(`/api/vehiculos/${id}/`, { method: "PATCH", body: JSON.stringify(datos) }),
+  eliminarVehiculo: (id) => request(`/api/vehiculos/${id}/`, { method: "DELETE" }),
+  resumenVehiculos: () => request("/api/vehiculos/resumen/"),
 
   listarCitas: () => request("/api/citas/").then(comoLista),
   crearCita: (datos) =>
