@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     "catalogo",
     "inventario",
     "citas",
+    "vehiculos",
 ]
 
 MIDDLEWARE = [
@@ -137,10 +138,11 @@ REST_FRAMEWORK = {
 
 # --- Documentacion OpenAPI / Swagger UI (US-12) --------------------------
 SPECTACULAR_SETTINGS = {
-    "TITLE": "API AUTOMOTORAFC",
+    "TITLE": "API Automotora Facundo Cousino",
     "DESCRIPTION": (
-        "API REST para la gestion de servicios automotrices, inventario de "
-        "repuestos y agendamiento de citas de AUTOMOTORAFC."
+        "API REST de Automotora Facundo Cousino: catalogo de vehiculos en "
+        "venta, servicios automotrices, inventario de repuestos y "
+        "agendamiento de citas."
     ),
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,

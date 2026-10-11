@@ -7,6 +7,7 @@ from django.core.management.base import BaseCommand
 
 from catalogo.models import Servicio
 from inventario.models import Producto
+from vehiculos.models import Vehiculo
 
 SERVICIOS = [
     {
@@ -129,6 +130,23 @@ PRODUCTOS = [
 ]
 
 
+VEHICULOS = [
+    # marca, modelo, version, anio, precio, km, carroceria, combustible, transmision, color, destacado, consignacion
+    ("Toyota", "Hilux", "2.4 4x4 SR", 2019, 18990000, 82000, "camioneta", "diesel", "manual", "Blanco", True, False),
+    ("Chevrolet", "Sail", "1.5 LT", 2018, 6290000, 96000, "auto", "bencina", "manual", "Gris", False, False),
+    ("Kia", "Morning", "1.25 EX", 2021, 7990000, 38000, "auto", "bencina", "automatica", "Rojo", True, False),
+    ("Hyundai", "Tucson", "2.0 GL", 2020, 14500000, 61000, "suv", "bencina", "automatica", "Azul", True, False),
+    ("Nissan", "Versa", "1.6 Sense", 2020, 9490000, 54000, "auto", "bencina", "automatica", "Plata", False, True),
+    ("Mitsubishi", "L200", "2.4 Katana 4x4", 2017, 15200000, 134000, "camioneta", "diesel", "manual", "Negro", False, False),
+    ("Suzuki", "Swift", "1.2 GL", 2022, 9890000, 22000, "auto", "bencina", "manual", "Blanco", False, False),
+    ("Peugeot", "Partner", "1.6 HDi", 2019, 8750000, 110000, "furgon", "diesel", "manual", "Blanco", False, True),
+    ("Mazda", "CX-5", "2.0 R", 2021, 19900000, 45000, "suv", "bencina", "automatica", "Gris", True, False),
+    ("Ford", "Ranger", "3.2 XLT 4x4", 2018, 17490000, 118000, "camioneta", "diesel", "automatica", "Azul", False, False),
+    ("Chevrolet", "N400", "1.5 Max", 2021, 7290000, 67000, "trabajo", "bencina", "manual", "Blanco", False, False),
+    ("Hyundai", "Accent", "1.4 GL", 2016, 5490000, 142000, "auto", "bencina", "manual", "Rojo", False, True),
+]
+
+
 class Command(BaseCommand):
     help = "Carga servicios y productos de demostracion."
 
@@ -154,6 +172,29 @@ class Command(BaseCommand):
             )
             creados_productos += int(creado)
 
+        creados_vehiculos = 0
+        for (ma, mo, ve, an, pr, km, ca, co, tr, cl, de, cs) in VEHICULOS:
+            _, creado = Vehiculo.objects.update_or_create(
+                marca=ma, modelo=mo, anio=an,
+                defaults={
+                    "version": ve, "precio": pr, "kilometraje": km,
+                    "carroceria": ca, "combustible": co, "transmision": tr,
+                    "color": cl, "destacado": de, "consignacion": cs,
+                    "descripcion": (
+                        f"{ma} {mo} {ve} ano {an}. Mantenciones al dia, "
+                        "documentacion en regla y revision tecnica vigente. "
+                        "Recibimos tu auto en parte de pago."
+                    ),
+                },
+            )
+            creados_vehiculos += int(creado)
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"Vehiculos: {Vehiculo.objects.count()} "
+                f"({creados_vehiculos} nuevos)."
+            )
+        )
         self.stdout.write(
             self.style.SUCCESS(
                 f"Listo. Servicios: {Servicio.objects.count()} "

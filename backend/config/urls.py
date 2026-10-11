@@ -12,7 +12,7 @@ from drf_spectacular.views import (
 
 def health(_request):
     """Endpoint de salud usado por Azure App Service."""
-    return JsonResponse({"status": "ok", "servicio": "automotora-fc-back"})
+    return JsonResponse({"status": "ok", "servicio": "automotora-facundo-cousino-api"})
 
 
 urlpatterns = [
@@ -22,6 +22,7 @@ urlpatterns = [
     path("api/", include("catalogo.urls")),
     path("api/", include("inventario.urls")),
     path("api/", include("citas.urls")),
+    path("api/", include("vehiculos.urls")),
     # Documentacion OpenAPI / Swagger UI (US-12)
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
