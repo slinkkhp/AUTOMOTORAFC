@@ -2,8 +2,17 @@ Django==5.1.5
 djangorestframework==3.15.2
 django-cors-headers==4.6.0
 drf-spectacular==0.28.0
-gunicorn==23.0.0
 whitenoise==6.8.2
 dj-database-url==2.3.0
-psycopg[binary]==3.2.3
 python-dotenv==1.0.1
+
+# Servidor WSGI de produccion. En Windows no se ejecuta, pero se instala sin
+# problemas; Azure App Service lo usa desde startup.sh.
+gunicorn==23.0.0
+
+# Driver de PostgreSQL. Solo hace falta cuando DATABASE_URL apunta a Postgres;
+# en desarrollo local con SQLite no se usa.
+# Sin fijar version exacta a proposito: las ruedas precompiladas de psycopg
+# salen por version de Python, y un pin cerrado rompe la instalacion en los
+# Python mas nuevos (3.13+), que es donde falla "No matching distribution".
+psycopg[binary]>=3.2,<4
